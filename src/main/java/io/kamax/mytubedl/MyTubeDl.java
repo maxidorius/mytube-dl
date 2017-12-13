@@ -48,7 +48,8 @@ public class MyTubeDl {
         log.info("youtube-dl: start");
 
         List<String> lines = new ArrayList<>();
-        ProcessResult result = new ProcessExecutor().command("youtube-dl", "-x", "--audio-format", "vorbis", "--audio-quality", "0", target.toString())
+        ProcessResult result = new ProcessExecutor()
+                .command("youtube-dl", "--no-playlist", "-x", "--audio-format", "vorbis", "--audio-quality", "0", target.toString())
                 .redirectErrorStream(true).redirectOutput(new LogOutputStream() {
 
                     @Override
