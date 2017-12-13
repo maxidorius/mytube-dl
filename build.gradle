@@ -1,0 +1,73 @@
+import java.util.regex.Pattern
+
+String gitVersion() {
+    def versionPattern = Pattern.compile("v(\\d+\\.)?(\\d+\\.)?(\\d+)(-.*)?")
+    ByteArrayOutputStream out = new ByteArrayOutputStream()
+    def o = exec {
+        commandLine = ['git', 'describe', '--tags', '--always', '--dirty']
+        standardOutput = out
+        errorOutput = out
+        ignoreExitValue = true
+    }
+    if (o.exitValue != 0) {
+        if (o.exitValue != 128) {
+            printf("Unable to determine git version: %s", out.toString())
+        }
+
+        return "latest"
+    }
+
+    def v = out.toString().replace(System.lineSeparator(), '')
+    return versionPattern.matcher(v).matches() ? v.substring(1) : v
+}
+
+String propValue(String propName, String defValue) {
+    (project.hasProperty(propName) && project.getProperty(propName)) ? project.getProperty(propName) : defValue
+}
+
+def dockerImageName = propValue('docker.image.name', project.name)
+def dockerImageTag = propValue('docker.image.tag', gitVersion())
+def dockerImage = dockerImageName + ':' + dockerImageTag
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.7.RELEASE'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot - standalone app
+    compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'
+
+    // Thymeleaf for HTML templates
+    compile "org.springframework.boot:spring-boot-starter-thymeleaf:1.5.7.RELEASE"
+
+    // Process execution
+    compile 'org.zeroturnaround:zt-exec:1.10'
+
+    // Easy file management
+    compile 'commons-io:commons-io:2.5'
+
+    testCompile 'junit:junit:4.12'
+}
+
+task dockerBuild(type: Exec, dependsOn: build) {
+    commandLine 'docker', 'build', '-t', dockerImage, project.rootDir
+
+    doLast {
+        exec {
+            commandLine 'docker', 'tag', dockerImage, "${dockerImageName}:latest-dev"
+        }
+    }
+}
