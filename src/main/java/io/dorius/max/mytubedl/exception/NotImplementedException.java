@@ -1,6 +1,6 @@
 /*
  * mytube-dl - WebUI for youtube-dl
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2019 Max Dor
  *
  * https://max.dorius.io/
  *
@@ -18,19 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mytubedl.spring.controller;
+package io.dorius.max.mytubedl.exception;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-
-@Controller
-public class HomeController {
-
-    @RequestMapping(method = GET, path = "/")
-    public String home() {
-        return "home";
-    }
-
+public class NotImplementedException extends RuntimeException {
 }

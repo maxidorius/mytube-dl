@@ -1,7 +1,7 @@
 /*
  * mytube-dl - WebUI for youtube-dl
  * Copyright (C) 2017 Max Dor
- * 
+ *
  * https://max.dorius.io/
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,4 +18,38 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-rootProject.name = 'mytube-dl'
+package io.dorius.max.mytubedl.model;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class MyTubeDl {
+
+    private static final Logger log = LoggerFactory.getLogger(MyTubeDl.class);
+
+    private YoutubeDlExec exec;
+
+    public MyTubeDl() {
+        this(new YoutubeDlExec());
+    }
+
+    public MyTubeDl(YoutubeDlExec exec) {
+        this.exec = exec;
+    }
+
+    public void start() {
+        exec.update();
+    }
+
+    public void stop() {
+
+    }
+
+    public Path download(String target, DownloadOptions options) {
+        return Paths.get(exec.download(target, options));
+    }
+
+}

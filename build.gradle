@@ -1,7 +1,7 @@
 /*
  * mytube-dl - WebUI for youtube-dl
- * Copyright (C) 2017 Maxime Dor
- * 
+ * Copyright (C) 2017 Max Dor
+ *
  * https://max.dorius.io/
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,45 +20,46 @@
 
 import java.util.regex.Pattern
 
-String gitVersion() {
-    def versionPattern = Pattern.compile("v(\\d+\\.)?(\\d+\\.)?(\\d+)(-.*)?")
-    ByteArrayOutputStream out = new ByteArrayOutputStream()
-    def o = exec {
-        commandLine = ['git', 'describe', '--tags', '--always', '--dirty']
-        standardOutput = out
-        errorOutput = out
-        ignoreExitValue = true
-    }
-    if (o.exitValue != 0) {
-        if (o.exitValue != 128) {
-            printf("Unable to determine git version: %s", out.toString())
-        }
-
-        return "latest"
-    }
-
-    def v = out.toString().replace(System.lineSeparator(), '')
-    return versionPattern.matcher(v).matches() ? v.substring(1) : v
-}
-
 String propValue(String propName, String defValue) {
     (project.hasProperty(propName) && project.getProperty(propName)) ? project.getProperty(propName) : defValue
 }
 
-def dockerImageName = propValue('docker.image.name', project.name)
-def dockerImageTag = propValue('docker.image.tag', gitVersion())
-def dockerImage = dockerImageName + ':' + dockerImageTag
+String appVersion() {
+    def versionPattern = Pattern.compile("v(\\d+\\.)?(\\d+\\.)?(\\d+)(-.*)?")
+
+    String version = System.getenv('MYTUBEDL_BUILD_VERSION')
+    if (version == null || version.size() == 0) {
+        version = gitVersion()
+    }
+    return versionPattern.matcher(version).matches() ? version.substring(1) : version
+}
+
+String gitVersion() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream()
+    exec {
+        commandLine = ['git', 'describe', '--always', '--dirty']
+        standardOutput = out
+    }
+    return out.toString().replace(System.lineSeparator(), '')
+}
 
 apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'idea'
+
+mainClassName = 'io.dorius.max.mytubedl.HttpApp'
+
+def dockerImageName = propValue('docker.image.name', 'maxidorius/mytube-dl')
+def dockerImageTag = propValue('docker.image.tag', appVersion())
 
 buildscript {
     repositories {
-        mavenCentral()
+        jcenter()
     }
 
     dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.7.RELEASE'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.0.0'
     }
 }
 
@@ -67,27 +68,54 @@ repositories {
 }
 
 dependencies {
-    // Spring Boot - standalone app
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.7.RELEASE'
+    // Logging
+    compile 'org.slf4j:slf4j-simple:1.7.25'
 
-    // Thymeleaf for HTML templates
-    compile "org.springframework.boot:spring-boot-starter-thymeleaf:1.5.7.RELEASE"
-
-    // Process execution
-    compile 'org.zeroturnaround:zt-exec:1.10'
+    // Basic utils
+    compile 'org.apache.commons:commons-lang3:3.9'
 
     // Easy file management
     compile 'commons-io:commons-io:2.5'
 
+    // Config management
+    compile 'org.yaml:snakeyaml:1.23'
+
+    // JSON handling
+    compile 'com.google.code.gson:gson:2.8.5'
+
+    // Process execution
+    compile 'org.zeroturnaround:zt-exec:1.10'
+
+    // HTTP server
+    compile 'io.undertow:undertow-core:2.0.16.Final'
+
     testCompile 'junit:junit:4.12'
 }
 
-task dockerBuild(type: Exec, dependsOn: build) {
-    commandLine 'docker', 'build', '-t', dockerImage, project.rootDir
+jar {
+    manifest {
+        attributes(
+                'Implementation-Version': appVersion()
+        )
+    }
+}
+
+task dockerBuild(type: Exec, dependsOn: shadowJar) {
+    commandLine 'docker', 'build', '-t', dockerImageName, project.rootDir
 
     doLast {
         exec {
-            commandLine 'docker', 'tag', dockerImage, "${dockerImageName}:latest-dev"
+            commandLine 'docker', 'tag', dockerImageTag, "${dockerImageName}:latest-dev"
+        }
+    }
+}
+
+task dockerPush(type: Exec) {
+    commandLine 'docker', 'push', dockerImageTag
+
+    doLast {
+        exec {
+            commandLine 'docker', 'push', "${dockerImageName}:latest-dev"
         }
     }
 }

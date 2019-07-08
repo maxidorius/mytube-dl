@@ -1,7 +1,7 @@
 /*
  * mytube-dl - WebUI for youtube-dl
- * Copyright (C) 2017 Max Dor
- * 
+ * Copyright (C) 2019 Max Dor
+ *
  * https://max.dorius.io/
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,4 +18,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-rootProject.name = 'mytube-dl'
+package io.dorius.max.mytubedl.http.handler;
+
+import io.dorius.max.mytubedl.util.FileUtil;
+
+import java.io.IOException;
+
+public class HomeHandler extends ApiHandler {
+
+    @Override
+    protected void handle(Exchange ex) throws IOException {
+        String data = FileUtil.load("classpath:/templates/home.html");
+        ex.writeBodyAsUtf8(data);
+    }
+
+}

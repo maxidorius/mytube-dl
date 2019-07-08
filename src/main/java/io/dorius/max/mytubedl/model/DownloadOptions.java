@@ -1,6 +1,6 @@
 /*
  * mytube-dl - WebUI for youtube-dl
- * Copyright (C) 2017 Maxime Dor
+ * Copyright (C) 2019 Max Dor
  *
  * https://max.dorius.io/
  *
@@ -18,16 +18,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.kamax.mytubedl;
+package io.dorius.max.mytubedl.model;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+public class DownloadOptions {
 
-@SpringBootApplication
-public class MyTubeDlApp {
+    public static DownloadOptions getDefault() {
+        DownloadOptions options = new DownloadOptions();
+        options.setFormat("bestaudio/best");
+        options.setAudioFormat("mp3");
+        return options;
+    }
 
-    public static void main(String[] args) {
-        SpringApplication.run(MyTubeDlApp.class);
+    private String audioFormat;
+    private String format;
+
+    public String getFormat() {
+        return format;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
+    public String getAudioFormat() {
+        return audioFormat;
+    }
+
+    public void setAudioFormat(String audioFormat) {
+        this.audioFormat = audioFormat;
     }
 
 }

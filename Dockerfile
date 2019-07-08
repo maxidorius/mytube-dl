@@ -4,7 +4,7 @@ RUN apt-get install --yes --no-install-recommends ca-certificates wget
 RUN wget https://yt-dl.org/downloads/latest/youtube-dl -O youtube-dl
 RUN chmod a+x youtube-dl
 
-FROM openjdk:8-jre-slim
+FROM openjdk:11-slim
 RUN set -ex \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
@@ -14,7 +14,7 @@ RUN set -ex \
     && rm -rf /var/lib/apt/* /var/cache/apt/* /var/tmp/* /tmp/*
 
 COPY --from=ytdl youtube-dl /usr/local/bin/youtube-dl
-ADD build/libs/mytube-dl.jar /app/bin/main.jar
+ADD build/libs/mytube-dl-all.jar /app/bin/main.jar
 ADD src/docker/start.sh /app/bin/start.sh
 
 VOLUME /app/etc
